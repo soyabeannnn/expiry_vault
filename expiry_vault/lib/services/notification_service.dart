@@ -52,3 +52,18 @@ class NotificationService {
 
     _initialized = true;
   }
+
+  Future<bool> requestPermissions() async {
+    final androidGranted = await _plugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
+    final iosGranted = await _plugin
+        .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+        ?.requestPermissions(alert: true, badge: true, sound: true);
+    return (androidGranted ?? true) && (iosGranted ?? true);
+  }
+
+  /// Deterministic notification id derived from the item's uuid so the same
+  /// item always maps to the same id (safe to call schedule twice; it just
+  /// replaces the pending notification).
+  int notificationIdFor(PantryItem item) => item.id.hashCode & 0x7fffffff;
