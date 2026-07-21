@@ -23,3 +23,44 @@ void main() {
       expect(ItemStatusService.daysUntil(expiryLaterToday, from: today), 0);
     });
   });
+
+  group('computeStatus', () {
+    const threshold = 3;
+
+    test('is fresh when days remaining exceeds the threshold', () {
+      final status =
+      ItemStatusService.computeStatus(DateTime(2026, 7, 20), threshold, from: today);
+      expect(status, ItemStatus.fresh);
+    });
+
+    test('is expiring soon exactly at the threshold boundary', () {
+      final status =
+      ItemStatusService.computeStatus(DateTime(2026, 7, 14), threshold, from: today);
+      expect(status, ItemStatus.expiringSoon);
+    });
+
+    test('is expiring soon the day just past the threshold is fresh', () {
+      final status =
+      ItemStatusService.computeStatus(DateTime(2026, 7, 15), threshold, from: today);
+      expect(status, ItemStatus.fresh);
+    });
+
+    test('is expiring soon on the expiry day itself', () {
+      final status =
+      ItemStatusService.computeStatus(DateTime(2026, 7, 11), threshold, from: today);
+      expect(status, ItemStatus.expiringSoon);
+    });
+
+    test('is expired the day after expiry', () {
+      final status =
+      ItemStatusService.computeStatus(DateTime(2026, 7, 10), threshold, from: today);
+      expect(status, ItemStatus.expired);
+    });
+
+    test('is expired well in the past', () {
+      final status =
+      ItemStatusService.computeStatus(DateTime(2026, 1, 1), threshold, from: today);
+      expect(status, ItemStatus.expired);
+    });
+  });
+}
