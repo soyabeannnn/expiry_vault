@@ -35,4 +35,32 @@ class PantryItem extends HiveObject {
 
   ItemStatus statusFor(int thresholdDays) =>
       ItemStatusService.computeStatus(expiryDate, thresholdDays);
+  PantryItem copyWith({
+    String? name,
+    ItemCategory? category,
+    double? quantity,
+    String? unit,
+    DateTime? expiryDate,
+    DateTime? purchaseDate,
+    String? photoPath,
+    String? notes,
+    int? scheduledNotificationId,
+    bool clearPhoto = false,
+    bool clearNotes = false,
+    bool clearPurchaseDate = false,
+  }) {
+    return PantryItem(
+      id: id,
+      name: name ?? this.name,
+      category: category ?? this.category,
+      quantity: quantity ?? this.quantity,
+      unit: unit ?? this.unit,
+      expiryDate: expiryDate ?? this.expiryDate,
+      createdAt: createdAt,
+      purchaseDate: clearPurchaseDate ? null : (purchaseDate ?? this.purchaseDate),
+      photoPath: clearPhoto ? null : (photoPath ?? this.photoPath),
+      notes: clearNotes ? null : (notes ?? this.notes),
+      scheduledNotificationId: scheduledNotificationId ?? this.scheduledNotificationId,
+    );
+  }
 }
