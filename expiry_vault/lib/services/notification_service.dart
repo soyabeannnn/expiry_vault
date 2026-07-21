@@ -67,3 +67,74 @@ class NotificationService {
   /// item always maps to the same id (safe to call schedule twice; it just
   /// replaces the pending notification).
   int notificationIdFor(PantryItem item) => item.id.hashCode & 0x7fffffff;
+
+  /// Schedules a single reminder at 09:00 on (expiryDate - leadDays). Does
+  /// nothing if that moment has already passed.
+  Future<int?> scheduleForItem(PantryItem item, int leadDays) async {
+    if (!_initialized) return null;
+
+    final expiry = item.expiryDate;
+    final reminderDate = DateTime(expiry.year, expiry.month, expiry.day)
+        .subtract(Duration(days: leadDays));
+    final scheduledAt = DateTime(
+      reminderDate.year,
+      reminderDate.month,
+      reminderDate.day,
+      9,
+    );
+
+    if (scheduledAt.isBefore(DateTime.now())) {
+      return null;
+    }
+
+    final id = notificationIdFor(item);
+    final tzDate = tz.TZDateTime.from(scheduledAt, tz.local);
+
+    try {
+      await _plugin.zonedSchedule(
+        id,
+        '${item.name} is expiring soon',
+        _bodyFor(item, leadDays),
+        tzDate,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            _channelId,
+            _channelName,
+            channelDescription: _channelDescription,
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+      return id;
+    } catch (e) {
+      debugPrint('NotificationService: failed to schedule for ${item.name}: $e');
+      return null;
+    }
+  }
+
+  Future<void> cancelForItem(PantryItem item) async {
+    await _plugin.cancel(notificationIdFor(item));
+  }
+
+  /// Re-derives every schedule from scratch, used when the lead-time
+  /// setting changes in Settings.
+  Future<void> rescheduleAll(Iterable<PantryItem> items, int leadDays) async {
+    for (final item in items) {
+      await cancelForItem(item);
+      final id = await scheduleForItem(item, leadDays);
+      item.scheduledNotificationId = id;
+      await item.save();
+    }
+  }
+
+  String _bodyFor(PantryItem item, int leadDays) {
+    if (leadDays <= 0) return '${item.name} expires today.';
+    if (leadDays == 1) return '${item.name} expires tomorrow.';
+    return '${item.name} expires in $leadDays days.';
+  }
+}
