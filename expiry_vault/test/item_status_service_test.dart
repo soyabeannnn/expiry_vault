@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pantry_pal/models/item_status.dart';
-import 'package:pantry_pal/services/item_status_service.dart';
+import 'package:expiry_vault/models/item_status.dart';
+import 'package:expiry_vault/services/item_status_service.dart';
 
 void main() {
   final today = DateTime(2026, 7, 11);
