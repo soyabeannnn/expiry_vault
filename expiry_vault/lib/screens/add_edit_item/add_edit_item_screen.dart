@@ -178,4 +178,42 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
                   ),
                 );
               }).toList(),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _quantityController,
+                    decoration: const InputDecoration(labelText: 'Quantity'),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    validator: (value) {
+                      final parsed = double.tryParse((value ?? '').trim());
+                      if (parsed == null || parsed <= 0) return 'Enter a valid number';
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: TextFormField(
+                    controller: _unitController,
+                    decoration: const InputDecoration(labelText: 'Unit (e.g. pcs, g, ml)'),
+                    validator: (value) =>
+                        (value == null || value.trim().isEmpty) ? 'Enter a unit' : null,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: AppConstants.commonUnits
+                  .map((unit) => ActionChip(
+                        label: Text(unit),
+                        onPressed: () => setState(() => _unitController.text = unit),
+                      ))
+                  .toList(),
             ),           
