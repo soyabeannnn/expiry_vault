@@ -1,0 +1,150 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+
+import '../../models/item_category.dart';
+import '../../models/pantry_item.dart';
+import '../../providers/item_provider.dart';
+import '../../providers/settings_provider.dart';
+import '../../theme/app_colors.dart';
+import '../../utils/constants.dart';
+
+/// Single form that handles both Create and Update — pass an existing
+/// [editingItem] to switch into edit mode (pre-filled fields, "Save
+/// changes" button, and an `updateItem` call instead of `addItem`).
+class AddEditItemScreen extends StatefulWidget {
+  const AddEditItemScreen({super.key, this.editingItem, this.initialCategory});
+
+  final PantryItem? editingItem;
+  final ItemCategory? initialCategory;
+
+  @override
+  State<AddEditItemScreen> createState() => _AddEditItemScreenState();
+}
+
+class _AddEditItemScreenState extends State<AddEditItemScreen> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameController;
+  late final TextEditingController _quantityController;
+  late final TextEditingController _unitController;
+  late final TextEditingController _notesController;
+
+  late ItemCategory _category;
+  late DateTime _expiryDate;
+  DateTime? _purchaseDate;
+  String? _photoPath;
+  bool _saving = false;
+
+  bool get _isEditing => widget.editingItem != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final item = widget.editingItem;
+    _nameController = TextEditingController(text: item?.name ?? '');
+    _quantityController = TextEditingController(text: (item?.quantity ?? 1).toString());
+    _unitController = TextEditingController(text: item?.unit ?? '');
+    _notesController = TextEditingController(text: item?.notes ?? '');
+    _category = item?.category ?? widget.initialCategory ?? ItemCategory.produce;
+    _expiryDate = item?.expiryDate ?? DateTime.now().add(const Duration(days: 7));
+    _purchaseDate = item?.purchaseDate;
+    _photoPath = item?.photoPath;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _quantityController.dispose();
+    _unitController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickDate({required bool isExpiry}) async {
+    final initial = isExpiry ? _expiryDate : (_purchaseDate ?? DateTime.now());
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2015),
+      lastDate: DateTime(2100),
+    );
+    if (picked == null) return;
+    setState(() {
+      if (isExpiry) {
+        _expiryDate = picked;
+      } else {
+        _purchaseDate = picked;
+      }
+    });
+  }
+
+  Future<void> _pickPhoto() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (picked == null) return;
+    setState(() => _photoPath = picked.path);
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _saving = true);
+    final itemProvider = context.read<ItemProvider>();
+    final leadDays = context.read<SettingsProvider>().reminderLeadDays;
+    final quantity = double.tryParse(_quantityController.text.trim()) ?? 1;
+
+    try {
+      if (_isEditing) {
+        final updated = widget.editingItem!.copyWith(
+          name: _nameController.text.trim(),
+          category: _category,
+          quantity: quantity,
+          unit: _unitController.text.trim(),
+          expiryDate: _expiryDate,
+          purchaseDate: _purchaseDate,
+          clearPurchaseDate: _purchaseDate == null,
+          photoPath: _photoPath,
+          clearPhoto: _photoPath == null,
+          notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+          clearNotes: _notesController.text.trim().isEmpty,
+        );
+        await itemProvider.updateItem(updated, reminderLeadDays: leadDays);
+      } else {
+        await itemProvider.addItem(
+          name: _nameController.text.trim(),
+          category: _category,
+          quantity: quantity,
+          unit: _unitController.text.trim(),
+          expiryDate: _expiryDate,
+          purchaseDate: _purchaseDate,
+          photoPath: _photoPath,
+          notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+          reminderLeadDays: leadDays,
+        );
+      }
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not save this item: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(_isEditing ? 'Edit item' : 'Add item')),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Center(child: _PhotoPicker(photoPath: _photoPath, category: _category, onTap: _pickPhoto)),
+            const SizedBox(height: 24),
