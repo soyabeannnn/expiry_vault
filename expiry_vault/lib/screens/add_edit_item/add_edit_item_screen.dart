@@ -5,6 +5,7 @@ import '../../models/item_category.dart';
 import '../../models/pantry_item.dart';
 import '../../providers/item_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../widgets/category_tile.dart';
 
 /// Single form that handles both Create and Update — pass an existing
 /// [editingItem] to switch into edit mode (pre-filled fields, "Save
@@ -56,6 +57,29 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
               controller: _nameController,
               decoration: const InputDecoration(labelText: 'Item name'),
               textCapitalization: TextCapitalization.sentences,
+            ),
+            const SizedBox(height: 16),
+            Text('Category', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: ItemCategory.values.map((category) {
+                final selected = category == _category;
+                return GestureDetector(
+                  onTap: () => setState(() => _category = category),
+                  child: Column(
+                    children: [
+                      CategoryTile(category: category, size: 52, selected: selected),
+                      const SizedBox(height: 4),
+                      Text(
+                        category.label,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
             ),
           ],
         ),
