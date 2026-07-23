@@ -232,6 +232,41 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
               onClear: _purchaseDate == null ? null : () => setState(() => _purchaseDate = null),
             ),
 
+class _PhotoPicker extends StatelessWidget {
+  const _PhotoPicker({required this.photoPath, required this.category, required this.onTap});
+
+  final String? photoPath;
+  final ItemCategory category;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 96,
+        height: 96,
+        decoration: BoxDecoration(
+          color: category.color.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.divider),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: photoPath != null
+            ? Image.file(File(photoPath!), fit: BoxFit.cover)
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(category.emoji, style: const TextStyle(fontSize: 32)),
+                  const SizedBox(height: 4),
+                  const Icon(Icons.add_a_photo_outlined, size: 16, color: AppColors.neutralGrey),
+                ],
+              ),
+      ),
+    );
+  }
+}
+
 class _DateField extends StatelessWidget {
   const _DateField({
     required this.label,
