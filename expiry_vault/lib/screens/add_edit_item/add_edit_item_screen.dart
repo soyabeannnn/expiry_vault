@@ -29,6 +29,7 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
 
   late ItemCategory _category;
   late DateTime _expiryDate;
+  DateTime? _purchaseDate;
 
   bool get _isEditing => widget.editingItem != null;
 
@@ -41,6 +42,7 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
     _unitController = TextEditingController(text: item?.unit ?? '');
     _category = item?.category ?? widget.initialCategory ?? ItemCategory.produce;
     _expiryDate = item?.expiryDate ?? DateTime.now().add(const Duration(days: 7));
+    _purchaseDate = item?.purchaseDate;
   }
 
   @override
@@ -49,6 +51,24 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
     _quantityController.dispose();
     _unitController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickDate({required bool isExpiry}) async {
+    final initial = isExpiry ? _expiryDate : (_purchaseDate ?? DateTime.now());
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2015),
+      lastDate: DateTime(2100),
+    );
+    if (picked == null) return;
+    setState(() {
+      if (isExpiry) {
+        _expiryDate = picked;
+      } else {
+        _purchaseDate = picked;
+      }
+    });
   }
 
   @override
@@ -126,9 +146,62 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
                       ))
                   .toList(),
             ),
+            const SizedBox(height: 20),
+            _DateField(
+              label: 'Expiry date',
+              date: _expiryDate,
+              onTap: () => _pickDate(isExpiry: true),
+              required: true,
+            ),
+            const SizedBox(height: 12),
+            _DateField(
+              label: 'Purchase date (optional)',
+              date: _purchaseDate,
+              onTap: () => _pickDate(isExpiry: false),
+              onClear: _purchaseDate == null ? null : () => setState(() => _purchaseDate = null),
+            ),
           ],
         ),
       ),
     );
   }
 }
+
+class _DateField extends StatelessWidget {
+  const _DateField({
+    required this.label,
+    required this.date,
+    required this.onTap,
+    this.required = false,
+    this.onClear,
+  });
+
+  final String label;
+  final DateTime? date;
+  final VoidCallback onTap;
+  final bool required;
+  final VoidCallback? onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          suffixIcon: onClear != null
+              ? IconButton(icon: const Icon(Icons.close, size: 18), onPressed: onClear)
+              : const Icon(Icons.calendar_today_outlined, size: 18),
+        ),
+        child: Text(
+          date == null
+              ? 'Select a date'
+              : '${date!.day}/${date!.month}/${date!.year}',
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+      ),
+    );
+  }
+}
+
