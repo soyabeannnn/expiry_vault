@@ -30,11 +30,13 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _quantityController;
   late final TextEditingController _unitController;
+  late final TextEditingController _notesController;
 
   late ItemCategory _category;
   late DateTime _expiryDate;
   DateTime? _purchaseDate;
   String? _photoPath;
+  bool _saving = false;
 
   bool get _isEditing => widget.editingItem != null;
 
@@ -45,6 +47,7 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
     _nameController = TextEditingController(text: item?.name ?? '');
     _quantityController = TextEditingController(text: (item?.quantity ?? 1).toString());
     _unitController = TextEditingController(text: item?.unit ?? '');
+    _notesController = TextEditingController(text: item?.notes ?? '');
     _category = item?.category ?? widget.initialCategory ?? ItemCategory.produce;
     _expiryDate = item?.expiryDate ?? DateTime.now().add(const Duration(days: 7));
     _purchaseDate = item?.purchaseDate;
@@ -56,6 +59,7 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
     _nameController.dispose();
     _quantityController.dispose();
     _unitController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -84,6 +88,50 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
     setState(() => _photoPath = picked.path);
   }
 
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _saving = true);
+    final itemProvider = context.read<ItemProvider>();
+    final leadDays = context.read<SettingsProvider>().reminderLeadDays;
+    final quantity = double.tryParse(_quantityController.text.trim()) ?? 1;
+
+    try {
+      if (_isEditing) {
+        final updated = widget.editingItem!.copyWith(
+          name: _nameController.text.trim(),
+          category: _category,
+          quantity: quantity,
+          unit: _unitController.text.trim(),
+          expiryDate: _expiryDate,
+          purchaseDate: _purchaseDate,
+          clearPurchaseDate: _purchaseDate == null,
+          photoPath: _photoPath,
+          clearPhoto: _photoPath == null,
+          notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+          clearNotes: _notesController.text.trim().isEmpty,
+        );
+        await itemProvider.updateItem(updated, reminderLeadDays: leadDays);
+      } else {
+        await itemProvider.addItem(
+          name: _nameController.text.trim(),
+          category: _category,
+          quantity: quantity,
+          unit: _unitController.text.trim(),
+          expiryDate: _expiryDate,
+          purchaseDate: _purchaseDate,
+          photoPath: _photoPath,
+          notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+          reminderLeadDays: leadDays,
+        );
+      }
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -93,10 +141,14 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
+            Center(child: _PhotoPicker(photoPath: _photoPath, category: _category, onTap: _pickPhoto)),
+            const SizedBox(height: 24),
             TextFormField(
               controller: _nameController,
               decoration: const InputDecoration(labelText: 'Item name'),
               textCapitalization: TextCapitalization.sentences,
+              validator: (value) =>
+                  (value == null || value.trim().isEmpty) ? 'Please enter a name' : null,
             ),
             const SizedBox(height: 16),
             Text('Category', style: Theme.of(context).textTheme.titleMedium),
@@ -172,6 +224,26 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
               date: _purchaseDate,
               onTap: () => _pickDate(isExpiry: false),
               onClear: _purchaseDate == null ? null : () => setState(() => _purchaseDate = null),
+            ),
+            const SizedBox(height: 20),
+            TextFormField(
+              controller: _notesController,
+              decoration: const InputDecoration(labelText: 'Notes (optional)'),
+              maxLines: 3,
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: _saving ? null : _save,
+                child: _saving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : Text(_isEditing ? 'Save changes' : 'Add to vault'),
+              ),
             ),
           ],
         ),
