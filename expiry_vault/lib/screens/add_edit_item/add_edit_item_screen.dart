@@ -1,10 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/item_category.dart';
 import '../../models/pantry_item.dart';
 import '../../providers/item_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../theme/app_colors.dart';
 import '../../utils/constants.dart';
 import '../../widgets/category_tile.dart';
 
@@ -30,6 +34,7 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
   late ItemCategory _category;
   late DateTime _expiryDate;
   DateTime? _purchaseDate;
+  String? _photoPath;
 
   bool get _isEditing => widget.editingItem != null;
 
@@ -43,6 +48,7 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
     _category = item?.category ?? widget.initialCategory ?? ItemCategory.produce;
     _expiryDate = item?.expiryDate ?? DateTime.now().add(const Duration(days: 7));
     _purchaseDate = item?.purchaseDate;
+    _photoPath = item?.photoPath;
   }
 
   @override
@@ -69,6 +75,13 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
         _purchaseDate = picked;
       }
     });
+  }
+
+  Future<void> _pickPhoto() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (picked == null) return;
+    setState(() => _photoPath = picked.path);
   }
 
   @override
@@ -162,6 +175,41 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PhotoPicker extends StatelessWidget {
+  const _PhotoPicker({required this.photoPath, required this.category, required this.onTap});
+
+  final String? photoPath;
+  final ItemCategory category;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 96,
+        height: 96,
+        decoration: BoxDecoration(
+          color: category.color.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.divider),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: photoPath != null
+            ? Image.file(File(photoPath!), fit: BoxFit.cover)
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(category.emoji, style: const TextStyle(fontSize: 32)),
+                  const SizedBox(height: 4),
+                  const Icon(Icons.add_a_photo_outlined, size: 16, color: AppColors.neutralGrey),
+                ],
+              ),
       ),
     );
   }
