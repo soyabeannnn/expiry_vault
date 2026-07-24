@@ -5,6 +5,7 @@ import '../../models/item_category.dart';
 import '../../models/pantry_item.dart';
 import '../../providers/item_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../utils/constants.dart';
 import '../../widgets/category_tile.dart';
 
 /// Single form that handles both Create and Update — pass an existing
@@ -23,6 +24,8 @@ class AddEditItemScreen extends StatefulWidget {
 class _AddEditItemScreenState extends State<AddEditItemScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
+  late final TextEditingController _quantityController;
+  late final TextEditingController _unitController;
 
   late ItemCategory _category;
   late DateTime _expiryDate;
@@ -34,6 +37,8 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
     super.initState();
     final item = widget.editingItem;
     _nameController = TextEditingController(text: item?.name ?? '');
+    _quantityController = TextEditingController(text: (item?.quantity ?? 1).toString());
+    _unitController = TextEditingController(text: item?.unit ?? '');
     _category = item?.category ?? widget.initialCategory ?? ItemCategory.produce;
     _expiryDate = item?.expiryDate ?? DateTime.now().add(const Duration(days: 7));
   }
@@ -41,6 +46,8 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _quantityController.dispose();
+    _unitController.dispose();
     super.dispose();
   }
 
@@ -80,6 +87,44 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
                   ),
                 );
               }).toList(),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _quantityController,
+                    decoration: const InputDecoration(labelText: 'Quantity'),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    validator: (value) {
+                      final parsed = double.tryParse((value ?? '').trim());
+                      if (parsed == null || parsed <= 0) return 'Enter a valid number';
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: TextFormField(
+                    controller: _unitController,
+                    decoration: const InputDecoration(labelText: 'Unit (e.g. pcs, g, ml)'),
+                    validator: (value) =>
+                        (value == null || value.trim().isEmpty) ? 'Enter a unit' : null,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: AppConstants.commonUnits
+                  .map((unit) => ActionChip(
+                        label: Text(unit),
+                        onPressed: () => setState(() => _unitController.text = unit),
+                      ))
+                  .toList(),
             ),
           ],
         ),
