@@ -127,6 +127,12 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
       }
       if (!mounted) return;
       Navigator.of(context).pop(true);
+      } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not save this item: $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
