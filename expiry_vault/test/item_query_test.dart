@@ -97,3 +97,17 @@ void main() {
       expect(result, [milk]);
     });
   });
+
+  group('needingAttention', () {
+    test('excludes fresh items and sorts soonest-first', () {
+      final result = ItemQuery.needingAttention(items, thresholdDays: 3, now: today);
+      expect(result, [pills, milk]);
+    });
+
+    test('returns empty list when nothing needs attention', () {
+      final freshOnly = [apple];
+      final result = ItemQuery.needingAttention(freshOnly, thresholdDays: 3, now: today);
+      expect(result, isEmpty);
+    });
+  });
+}
