@@ -64,4 +64,53 @@ labelStyle: TextStyle(color: selected ? Colors.white : null),
 ],
 ),
 ),
+),
+  const SizedBox(height: 28),
+  Text('Categories', style: Theme.of(context).textTheme.titleLarge),
+  const SizedBox(height: 12),
+  Card(
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        children: ItemCategory.values
+            .map(
+              (category) => ListTile(
+            leading: CategoryTile(category: category, size: 36),
+            title: Text(category.label),
+            trailing: Text(
+              '${items.where((i) => i.category == category).length} items',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        )
+            .toList(),
+      ),
+    ),
+  ),
+  const SizedBox(height: 28),
+  Text('About', style: Theme.of(context).textTheme.titleLarge),
+  const SizedBox(height: 12),
+  Card(
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('ExpiryVault', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 4),
+          Text(
+            'Never let your fridge surprise you again. Built with Flutter for '
+                'CSC2074 Mobile Application Development.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+          Text('Version 1.0.0', style: Theme.of(context).textTheme.bodySmall),
+        ],
+      ),
+    ),
+  ),
+],
+),
 );
+}
+}
