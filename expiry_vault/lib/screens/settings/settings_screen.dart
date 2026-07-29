@@ -46,4 +46,22 @@ onChanged: (value) => settings.setNotificationsEnabled(value),
 activeThumbColor: AppColors.vaultBlue,
 ),
 ],
-)
+),
+const SizedBox(height: 12),
+Wrap(
+spacing: 10,
+children: AppSettings.availableLeadDays.map((days) {
+final selected = settings.reminderLeadDays == days;
+return ChoiceChip(
+label: Text(days == 1 ? '1 day before' : '$days days before'),
+selected: selected,
+onSelected: (_) =>
+settings.setReminderLeadDays(days, itemsToReschedule: items),
+labelStyle: TextStyle(color: selected ? Colors.white : null),
+);
+}).toList(),
+),
+],
+),
+),
+);
