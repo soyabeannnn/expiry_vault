@@ -6,15 +6,40 @@ import 'package:provider/provider.dart';
 import '../../models/pantry_item.dart';
 import '../../providers/item_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../theme/app_colors.dart';
 import '../../utils/date_utils.dart';
 import '../../widgets/category_tile.dart';
 import '../../widgets/status_badge.dart';
+import '../add_edit_item/add_edit_item_screen.dart';
 
 /// Full detail view for a single item, with Edit/Delete actions.
 class ItemDetailScreen extends StatelessWidget {
   const ItemDetailScreen({super.key, required this.itemId});
 
   final String itemId;
+
+  Future<void> _confirmDelete(BuildContext context, PantryItem item) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove this item?'),
+        content: Text('"${item.name}" will be deleted from your vault. This can\'t be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.tomatoRed),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      await context.read<ItemProvider>().deleteItem(item);
+      if (context.mounted) Navigator.of(context).pop();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +50,23 @@ class ItemDetailScreen extends StatelessWidget {
     final status = item.statusFor(leadDays);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Item detail')),
+      appBar: AppBar(
+        title: const Text('Item detail'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => AddEditItemScreen(editingItem: item)),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            onPressed: () => _confirmDelete(context, item!),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
