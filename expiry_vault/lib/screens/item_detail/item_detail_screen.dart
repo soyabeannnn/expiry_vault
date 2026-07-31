@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import '../../models/pantry_item.dart';
 import '../../providers/item_provider.dart';
 import '../../providers/settings_provider.dart';
-import '../../theme/app_colors.dart';
+import '../../themes/app_colors.dart';
 import '../../utils/date_utils.dart';
 import '../../widgets/category_tile.dart';
 import '../../widgets/status_badge.dart';

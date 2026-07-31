@@ -8,7 +8,7 @@ import '../../models/item_category.dart';
 import '../../models/pantry_item.dart';
 import '../../providers/item_provider.dart';
 import '../../providers/settings_provider.dart';
-import '../../theme/app_colors.dart';
+import '../../themes/app_colors.dart';
 import '../../utils/constants.dart';
 import '../../widgets/category_tile.dart';
 

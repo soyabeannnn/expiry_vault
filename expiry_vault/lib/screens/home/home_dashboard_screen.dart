@@ -6,7 +6,7 @@ import '../../models/item_status.dart';
 import '../../providers/item_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../services/item_status_service.dart';
-import '../../theme/app_colors.dart';
+import '../../themes/app_colors.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/section_header.dart';
 import '../add_edit_item/add_edit_item_screen.dart';
