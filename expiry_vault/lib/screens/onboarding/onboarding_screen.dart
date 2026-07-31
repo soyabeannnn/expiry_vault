@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/settings_provider.dart';
 import '../../services/notification_service.dart';
-import '../../theme/app_colors.dart';
+import '../../themes/app_colors.dart';
 import '../shell/main_shell.dart';
 
 class _OnboardingPage {
