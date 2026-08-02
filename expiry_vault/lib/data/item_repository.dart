@@ -48,6 +48,11 @@ class ItemRepository {
   }
 
   Future<void> update(PantryItem item) async {
+    // Use put() rather than item.save(): `item` may be a plain PantryItem
+    // built via copyWith() that was never attached to this box (save()
+    // requires HiveObject.isInBox and throws otherwise). put() writes it
+    // under the same key the item was originally created with and attaches
+    // it to the box either way.
     await _box.put(item.id, item);
   }
 
