@@ -46,7 +46,17 @@ class ItemDetailScreen extends StatelessWidget {
     final itemProvider = context.watch<ItemProvider>();
     final leadDays = context.watch<SettingsProvider>().reminderLeadDays;
 
-    final item = itemProvider.items.firstWhere((i) => i.id == itemId);
+    PantryItem? item;
+    try {
+      item = itemProvider.items.firstWhere((i) => i.id == itemId);
+    } catch (_) {
+      item = null;
+    }
+
+    if (item == null) {
+      return const Scaffold(body: Center(child: Text('This item no longer exists.')));
+    }
+    
     final status = item.statusFor(leadDays);
 
     return Scaffold(

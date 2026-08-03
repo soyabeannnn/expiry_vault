@@ -68,6 +68,13 @@ class NotificationService {
   /// replaces the pending notification).
   int notificationIdFor(PantryItem item) => item.id.hashCode & 0x7fffffff;
 
+  /// Builds the notification body text for a given lead time
+  String _bodyFor(PantryItem item, int leadDays) {
+    if (leadDays <= 0) return '${item.name} expires today.';
+    if (leadDays == 1) return '${item.name} expires tomorrow.';
+    return '${item.name} expires in $leadDays days.';
+  }
+
   /// Schedules a single reminder at 09:00 on (expiryDate - leadDays). Does
   /// nothing if that moment has already passed.
   Future<int?> scheduleForItem(PantryItem item, int leadDays) async {
@@ -130,11 +137,5 @@ class NotificationService {
       item.scheduledNotificationId = id;
       await item.save();
     }
-  }
-
-  String _bodyFor(PantryItem item, int leadDays) {
-    if (leadDays <= 0) return '${item.name} expires today.';
-    if (leadDays == 1) return '${item.name} expires tomorrow.';
-    return '${item.name} expires in $leadDays days.';
   }
 }
