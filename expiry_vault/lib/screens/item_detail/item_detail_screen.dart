@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/item_category.dart';
 import '../../models/pantry_item.dart';
 import '../../providers/item_provider.dart';
 import '../../providers/settings_provider.dart';
